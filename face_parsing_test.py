@@ -8,6 +8,7 @@ from ibug.face_detection import RetinaFacePredictor
 from ibug.face_parsing import RTNetPredictor
 from ibug.face_parsing.utils import label_colormap
 
+
 def main() -> None:
     # Parse command-line arguments
     parser = ArgumentParser()
@@ -48,13 +49,13 @@ def main() -> None:
         device=args.device, ckpt=args.weights, encoder=args.method, num_classes=args.num_classes)
 
     colormap = label_colormap(args.num_classes)
-    alphas = np.linspace(0.2, 0.8, num=args.max_num_faces)
     print('Face detector created using RetinaFace.')
     try:
         # Open the input video
         using_webcam = not os.path.exists(args.input)
         vid = cv2.VideoCapture(int(args.input) if using_webcam else args.input)
         assert vid.isOpened()
+        alphas = np.linspace(0.75, 0.25, num=args.max_num_faces)
         if using_webcam:
             print(f'Webcam #{int(args.input)} opened.')
         else:
@@ -87,6 +88,8 @@ def main() -> None:
                 print(f'Frame #{frame_number} processed in {elapsed_time * 1000.0:.04f} ms: ' +
                       f'{len(faces)} faces detected.')
 
+                if len(faces) == 0:
+                    continue
                 # Parse faces
                 start_time = time.time()
                 masks = face_parser.predict_img(frame, faces, rgb=False)
@@ -96,21 +99,18 @@ def main() -> None:
                 print(f'Frame #{frame_number} processed in {elapsed_time * 1000.0:.04f} ms: ' +
                       f'{len(masks)} faces parsed.')
 
-                # Rendering
+                # # Rendering
                 dst = frame
-                for instance_id, (face, mask) in enumerate(zip(faces, masks)):
-                    alpha = alphas[instance_id]
+                for i, (face, mask) in enumerate(zip(faces, masks)):
                     bbox = face[:4].astype(int)
-                    cv2.rectangle(dst, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color=(
+                    cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color=(
                         0, 0, 255), thickness=2)
-                    if mask is None or mask.sum() == 0:
-                        continue
-                    color_ins = colormap[1:][instance_id % len(colormap[1:])]
-                    maskviz = mask[:, :, None] * color_ins.astype(float)
-                    dst = dst.copy()
-                    dst[mask] = (1 - alpha) * frame[mask].astype(float) + alpha * maskviz[
-                        mask
-                    ]
+                    alpha = alphas[i]
+                    index = mask > 0
+                    res = colormap[mask]
+                    dst[index] = (1 - alpha) * frame[index].astype(float) + \
+                        alpha * res[index].astype(float)
+                dst = np.clip(dst.round(), 0, 255).astype(np.uint8)
                 frame = dst
                 # Write the frame to output video (if recording)
                 if out_vid is not None:

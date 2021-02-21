@@ -56,7 +56,7 @@ class RTNetPredictor(object):
         self.model = SegmentationModel(encoder, decoder, num_classes)
         if ckpt is None:
             ckpt = WEIGHT[encoder]
-        ckpt = torch.load(ckpt)
+        ckpt = torch.load(ckpt, 'cpu')
         ckpt = ckpt.get('state_dict', ckpt)
         self.model.load_state_dict(ckpt, True)
         self.model.eval()
@@ -82,7 +82,7 @@ class RTNetPredictor(object):
 
         img = img.repeat(num_faces, 1, 1, 1)
         img = roi_tanh_polar_warp(
-            img, bboxes_tensor, TARGET_SIZE, keep_aspect_ratio=True)
+            img, bboxes_tensor, target_height=TARGET_SIZE[0], target_width=TARGET_SIZE[1], keep_aspect_ratio=True)
 
         logits = self.model(img, bboxes_tensor)
         mask = self.restore_warp(h, w, logits, bboxes_tensor)
@@ -94,7 +94,7 @@ class RTNetPredictor(object):
         # print(logits.argmax(-1).max())
         logits[:, 0] = 1 - logits[:, 0]  # background class
         logits = roi_tanh_polar_restore(
-            logits, bboxes_tensor, (h, w), keep_aspect_ratio=True
+            logits, bboxes_tensor, w, h, keep_aspect_ratio=True
         )
         # print(logits.argmax(-1).max())
         logits[:, 0] = 1 - logits[:, 0]

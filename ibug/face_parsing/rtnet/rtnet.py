@@ -120,11 +120,11 @@ class HybridBlock(nn.Module):
         if self.hybrid:
             _, _, h1, w1 = out_b.size()
             out_b = roi_tanh_polar_to_roi_tanh(
-                out_b, rois, (h1, w1), keep_aspect_ratio=True)
+                out_b, rois, w1, h1, keep_aspect_ratio=True)
             out_b = self.conv_cart(out_b)
             _, _, h2, w2 = out_b.size()
             out_b = roi_tanh_to_roi_tanh_polar(
-                out_b, rois/(h1/h2), (h2, w2), keep_aspect_ratio=True)
+                out_b, rois/(h1/h2), w2, h2, keep_aspect_ratio=True)
         else:
             out_b = self.conv_cart(out_b)
 
