@@ -1,8 +1,8 @@
 # ibug.face_parsing
-In-the-wild face parsing 
+RoI Tanh-polar Transformer Network for Face Parsing in the Wild.
+
 
 __Note__: If you use this repository in your research, we kindly rquest you to cite the [following paper](https://arxiv.org/pdf/2102.02717):
-
 ```bibtex
 @misc{lin2021roi,
       title={RoI Tanh-polar Transformer Network for Face Parsing in the Wild}, 
@@ -31,24 +31,17 @@ pip install -e .
 
 ## How to Test
 ```bash
-python face_warping_test.py -v 0 -p 1 -r -k
+python face_warping_test.py -i 0
 ```
 
 Command-line arguments:
 ```
--v VIDEO: Index of the webcam to use (start from 0) or
+-i VIDEO: Index of the webcam to use (start from 0) or
           path of the input video file
--x WIDTH: Width of the warped frames (default=256)
--y HEIGHT: Height of the warped frames (default=256)
--p POLAR: Use tanh-polar warping (when set to 1) or 
-          tanh-circular warping (when set to 2) instead of 
-          normal tanh warping (when set to 0, default)
--o OFFSET: Angular offset in degrees
--r: To also show restored frames
--c: To also compare with OpenCV-based reference implementation
--s: To use square-shaped detection box
--n: To use nearest-neighbour interpolation during restoration
--k: Keep aspect ratio in tanh-polar or tanh-circular warping
 -d: Device to be used by PyTorch (default=cuda:0)
 -b: Enable benchmark mode for CUDNN
 ```
+
+## Visualisation
+![](./imgs/vis1.jpg)
+![](./imgs/vis2.jpg)
