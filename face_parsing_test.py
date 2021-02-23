@@ -25,7 +25,7 @@ def main() -> None:
     parser.add_argument('--threshold', '-t', help='Detection threshold (default=0.8)',
                         type=float, default=0.8)
     parser.add_argument('--method', '-m', help='Method to use, can be either rtnet50 or rtnet101 (default=rtnet50)',
-                        default='rtnet50')
+                        default='rtnet50', choices=['rtnet50', 'rtnet101'])
     parser.add_argument('--num-classes', help='Face parsing classes (default=11)',
                         default=11)
     parser.add_argument('--max-num-faces', help='Max number of faces',
