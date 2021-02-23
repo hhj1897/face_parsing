@@ -1,0 +1,5 @@
+numpy>=1.17.0
+scipy>=1.1.0
+torch>=1.6.0
+torchvision>=0.7.0
+opencv-python>= 3.4.2
