@@ -290,7 +290,7 @@ class RTNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x, rois):
+    def forward(self, x, rois, return_features=False):
         _, _, H, W = x.shape
         x = self.conv1(x)
         x = self.bn1(x)
@@ -305,6 +305,8 @@ class RTNet(nn.Module):
         c3 = self.layer3(dict(x=c2, rois=rois/s3))['x']
         s4 = H / c3.shape[2]
         c4 = self.layer4(dict(x=c3, rois=rois/s4))['x']
+        if return_features:
+            return dict(c1=c1, c2=c2, c3=c3, c4=c4)
         return dict(out=c4, aux=c3)
 
 

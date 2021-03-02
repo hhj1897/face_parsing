@@ -32,6 +32,7 @@ WEIGHT = {
     'rtnet101': Path(__file__).parent / 'weights/rtnet101.torch',
 }
 
+
 class SegmentationModel(nn.Module):
 
     def __init__(self, encoder='rtnet50', decoder='fcn', num_classes=11):
@@ -101,3 +102,11 @@ class RTNetPredictor(object):
         # print(logits.argmax(-1).max())
         predict = logits.cpu().argmax(1).numpy()
         return predict
+
+    @torch.no_grad()
+    def extract_features(self, x: torch.Tensor, rois: torch.Tensor):
+
+        features = self.encoder(x, rois, return_features=True)
+        x = self.decoder(features['c4'])
+        features['hm'] = x
+        return features
