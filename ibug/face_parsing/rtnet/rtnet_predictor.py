@@ -106,7 +106,7 @@ class RTNetPredictor(object):
     @torch.no_grad()
     def extract_features(self, x: torch.Tensor, rois: torch.Tensor):
 
-        features = self.encoder(x, rois, return_features=True)
-        x = self.decoder(features['c4'])
+        features = self.model.encoder(x, rois, return_features=True)
+        x = self.model.decoder(features['c4'])
         features['hm'] = x
         return features
