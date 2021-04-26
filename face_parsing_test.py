@@ -20,7 +20,7 @@ def main() -> None:
                         type=str, default='mp4v')
     parser.add_argument('--benchmark', '-b', help='Enable benchmark mode for CUDNN',
                         action='store_true', default=False)
-    parser.add_argument('--no-display', '-n', help='No display if processing a video file',
+    parser.add_argument('--no-display', help='No display if processing a video file',
                         action='store_true', default=False)
     parser.add_argument('--threshold', '-t', help='Detection threshold (default=0.8)',
                         type=float, default=0.8)
@@ -29,8 +29,7 @@ def main() -> None:
 
     parser.add_argument('--decoder', help='Method to use, can be either rtnet50 or rtnet101 (default=rtnet50)',
                         default='fcn', choices=['fcn', 'deeplabv3plus'])
-    parser.add_argument('--num-classes', help='Face parsing classes (default=11)', type=int,
-                        default=11)
+    parser.add_argument('-n', '--num-classes', help='Face parsing classes (default=11)', type=int, default=11)
     parser.add_argument('--max-num-faces', help='Max number of faces',
                         default=50)
     parser.add_argument('--weights', '-w',

@@ -31,15 +31,51 @@ pip install -e .
 
 ## How to Test
 ```bash
-python face_warping_test.py -i 0
+python face_warping_test.py -i 0 -e rtnet50 --decoder fcn -n 11 -d cuda:0
 ```
-
 Command-line arguments:
 ```
 -i VIDEO: Index of the webcam to use (start from 0) or
           path of the input video file
 -d: Device to be used by PyTorch (default=cuda:0)
--b: Enable benchmark mode for CUDNN
+-e: Encoder (default=rtnet50)
+--decoder: Decoder (default=fcn)
+-n: Number of facial classes, can be 11 or 14 for now (default=11)
+```
+
+## Label Maps
+
+Label map for 11 classes: 
+```
+0 : background
+1 : skin (including face and scalp)
+2 : left_eyebrow
+3 : right_eyebrow
+4 : left_eye
+5 : right_eye
+6 : nose
+7 : upper_lip
+8 : inner_mouth
+9 : lower_lip
+10 : hair
+```
+
+Label map for 14 classes: 
+```
+0 : background
+1 : skin (including face and scalp)
+2 : left_eyebrow
+3 : right_eyebrow
+4 : left_eye
+5 : right_eye
+6 : nose
+7 : upper_lip
+8 : inner_mouth
+9 : lower_lip
+10 : hair
+11 : left_ear
+12 : right_ear
+13 : glasses
 ```
 
 ## Visualisation
