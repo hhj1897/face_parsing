@@ -33,7 +33,11 @@ class Backbone(BackboneBase):
     """ResNet backbone with frozen BatchNorm."""
 
     def __init__(self, name: str):
+        if 'resnet18' in name or 'resnet34' in name:
+            replace_stride_with_dilation = [False, False, False]
+        else:
+            replace_stride_with_dilation = [False, True, True]
         backbone = getattr(torchvision.models, name)(
-            replace_stride_with_dilation=[False, True, True])
+            replace_stride_with_dilation=replace_stride_with_dilation)
         num_channels = 512 if name in ('resnet18', 'resnet34') else 2048
         super().__init__(backbone, num_channels)

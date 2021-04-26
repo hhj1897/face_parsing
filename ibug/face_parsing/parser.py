@@ -6,6 +6,7 @@ from torch import nn
 import torch.nn.functional as F
 import torchvision.transforms as T
 from ibug.roi_tanh_warping import roi_tanh_polar_restore, roi_tanh_polar_warp
+import ibug.roi_tanh_warping.reference_impl as ref
 from .rtnet import rtnet50, rtnet101, FCN
 from .resnet import Backbone, DeepLabV3Plus
 
@@ -21,7 +22,7 @@ DECODER_MAP = {
 WEIGHT = {
     'rtnet50-fcn-11': (Path(__file__).parent / 'rtnet/weights/rtnet50.torch', (0.406, 0.456, 0.485), (0.225, 0.224, 0.229), (512, 512)),
     'rtnet101-fcn-11': (Path(__file__).parent / 'rtnet/weights/rtnet101.torch', (0.406, 0.456, 0.485), (0.225, 0.224, 0.229), (512, 512)),
-    # 'resnet50-fcn-14': (Path(__file__).parent / 'resnet/weights/resnet50-fcn-14.torch', 0.5, 0.5, (513, 513)),
+    'resnet50-fcn-14': (Path(__file__).parent / 'resnet/weights/resnet50-fcn-14.torch', 0.5, 0.5, (513, 513)),
     'resnet50-deeplabv3plus-14': (Path(__file__).parent / 'resnet/weights/resnet50-deeplabv3plus-14.torch', 0.5, 0.5, (513, 513)),
 }
 
@@ -91,30 +92,34 @@ class FaceParser(object):
             raise TypeError
         h, w = img.shape[:2]
 
-        img = self.transform(img).unsqueeze(0).to(self.device)
-
         num_faces = len(bboxes)
+
+
+        imgs = [ref.roi_tanh_polar_warp(img, b, *self.sz, keep_aspect_ratio=True) for b in bboxes]
+        imgs = [self.transform(img) for img in imgs]
         bboxes_tensor = torch.tensor(
             bboxes).view(num_faces, -1).to(self.device)
 
-        img = img.repeat(num_faces, 1, 1, 1)
-        img = roi_tanh_polar_warp(
-            img, bboxes_tensor, target_height=self.sz[0], target_width=self.sz[1], keep_aspect_ratio=True)
+        # img = img.repeat(num_faces, 1, 1, 1)
+        # img = roi_tanh_polar_warp(
+            # img, bboxes_tensor, target_height=self.sz[0], target_width=self.sz[1], keep_aspect_ratio=True)
+        # img = self.transform(img).unsqueeze(0).to(self.device)
 
+        img = torch.stack(imgs).to(self.device)
         logits = self.model(img, bboxes_tensor)
         mask = self.restore_warp(h, w, logits, bboxes_tensor)
         return mask
 
     def restore_warp(self, h, w, logits: torch.Tensor, bboxes_tensor):
         # import ipdb; ipdb.set_trace()
-        logits = logits.sigmoid()
+        # logits = logits.sigmoid()
         # print(logits.argmax(-1).max())
-        logits[:, 0] = 1 - logits[:, 0]  # background class
+        # logits[:, 0] = 1 - logits[:, 0]  # background class
         logits = roi_tanh_polar_restore(
             logits, bboxes_tensor, w, h, keep_aspect_ratio=True
         )
         # print(logits.argmax(-1).max())
-        logits[:, 0] = 1 - logits[:, 0]
+        # logits[:, 0] = 1 - logits[:, 0]
         # print(logits.argmax(-1).max())
         predict = logits.cpu().argmax(1).numpy()
         return predict
