@@ -1,0 +1,1 @@
+resnet50-deeplabv3plus-14.torch filter=lfs diff=lfs merge=lfs -text

@@ -1,4 +1,5 @@
-from .rtnet import RTNetPredictor
+from .resnet import *
+from .rtnet import *
 from .utils import *
-
-__version__ = '0.1.0'
+from .parser import FaceParser
+__version__ = '0.2.0'

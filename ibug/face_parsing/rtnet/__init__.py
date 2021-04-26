@@ -1,1 +1,1 @@
-from .rtnet_predictor import RTNetPredictor
+from .rtnet import rtnet50, rtnet101, FCN

@@ -7,29 +7,22 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 from ibug.roi_tanh_warping import roi_tanh_polar_restore, roi_tanh_polar_warp
 from .rtnet import rtnet50, rtnet101, FCN
+from .resnet import Backbone, DeepLabV3Plus
 
 ENCODER_MAP = {
     'rtnet50': [rtnet50, 2048],  # model_func, in_channels
-    'rtnet101': [rtnet101, 2048]
+    'rtnet101': [rtnet101, 2048],
 }
 DECODER_MAP = {
-    'fcn': FCN
+    'fcn': FCN,
+    'deeplabv3plus': DeepLabV3Plus
 }
-TARGET_SIZE = (512, 512)
-
-norm_mean = (0.406, 0.456, 0.485)
-
-norm_std = (0.225, 0.224, 0.229)
-
-TRANSFORM = T.Compose([
-    T.ToTensor(),
-    T.Normalize(norm_mean, norm_std)
-]
-)
 
 WEIGHT = {
-    'rtnet50': Path(__file__).parent / 'weights/rtnet50.torch',
-    'rtnet101': Path(__file__).parent / 'weights/rtnet101.torch',
+    'rtnet50-fcn-11': (Path(__file__).parent / 'rtnet/weights/rtnet50.torch', (0.406, 0.456, 0.485), (0.225, 0.224, 0.229), (512, 512)),
+    'rtnet101-fcn-11': (Path(__file__).parent / 'rtnet/weights/rtnet101.torch', (0.406, 0.456, 0.485), (0.225, 0.224, 0.229), (512, 512)),
+    # 'resnet50-fcn-14': (Path(__file__).parent / 'resnet/weights/resnet50-fcn-14.torch', 0.5, 0.5, (513, 513)),
+    'resnet50-deeplabv3plus-14': (Path(__file__).parent / 'resnet/weights/resnet50-deeplabv3plus-14.torch', 0.5, 0.5, (513, 513)),
 }
 
 
@@ -37,26 +30,49 @@ class SegmentationModel(nn.Module):
 
     def __init__(self, encoder='rtnet50', decoder='fcn', num_classes=11):
         super().__init__()
-        encoder_func, in_channels = ENCODER_MAP[encoder.lower()]
-        self.encoder = encoder_func()
+
+        if 'rtnet' in encoder:
+            encoder_func, in_channels = ENCODER_MAP[encoder.lower()]
+            self.encoder = encoder_func()
+        else:
+            self.encoder = Backbone(encoder)
+            in_channels = self.encoder.num_channels
         self.decoder = DECODER_MAP[decoder.lower()](
             in_channels=in_channels, num_classes=num_classes)
+        self.low_level = getattr(self.decoder, 'low_level', False)
 
     def forward(self, x, rois):
         input_shape = x.shape[-2:]
-        features = self.encoder(x, rois)['out']
-        x = self.decoder(features)
+        features = self.encoder(x, rois)
+
+        low = features['c1']
+        high = features['c4']
+        if self.low_level:
+            x = self.decoder(high, low)
+        else:
+            x = self.decoder(high)
         x = F.interpolate(x, size=input_shape,
                           mode='bilinear', align_corners=False)
         return x
 
 
-class RTNetPredictor(object):
+class FaceParser(object):
     def __init__(self, device='cuda:0', ckpt=None, encoder='rtnet50', decoder='fcn', num_classes=11):
         self.device = device
+        model_name = '-'.join([encoder, decoder, str(num_classes)])
+        assert model_name in WEIGHT
+
+        pretrained_ckpt, mean, std, sz = WEIGHT[model_name]
+        self.sz = sz
+
         self.model = SegmentationModel(encoder, decoder, num_classes)
+
+        self.transform = T.Compose([
+            T.ToTensor(),
+            T.Normalize(mean, std)
+        ])
         if ckpt is None:
-            ckpt = WEIGHT[encoder]
+            ckpt = pretrained_ckpt
         ckpt = torch.load(ckpt, 'cpu')
         ckpt = ckpt.get('state_dict', ckpt)
         self.model.load_state_dict(ckpt, True)
@@ -75,7 +91,7 @@ class RTNetPredictor(object):
             raise TypeError
         h, w = img.shape[:2]
 
-        img = TRANSFORM(img).unsqueeze(0).to(self.device)
+        img = self.transform(img).unsqueeze(0).to(self.device)
 
         num_faces = len(bboxes)
         bboxes_tensor = torch.tensor(
@@ -83,7 +99,7 @@ class RTNetPredictor(object):
 
         img = img.repeat(num_faces, 1, 1, 1)
         img = roi_tanh_polar_warp(
-            img, bboxes_tensor, target_height=TARGET_SIZE[0], target_width=TARGET_SIZE[1], keep_aspect_ratio=True)
+            img, bboxes_tensor, target_height=self.sz[0], target_width=self.sz[1], keep_aspect_ratio=True)
 
         logits = self.model(img, bboxes_tensor)
         mask = self.restore_warp(h, w, logits, bboxes_tensor)

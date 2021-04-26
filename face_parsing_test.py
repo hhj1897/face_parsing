@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from argparse import ArgumentParser
 from ibug.face_detection import RetinaFacePredictor
-from ibug.face_parsing import RTNetPredictor
+from ibug.face_parsing import FaceParser as RTNetPredictor
 from ibug.face_parsing.utils import label_colormap
 
 
@@ -24,9 +24,12 @@ def main() -> None:
                         action='store_true', default=False)
     parser.add_argument('--threshold', '-t', help='Detection threshold (default=0.8)',
                         type=float, default=0.8)
-    parser.add_argument('--method', '-m', help='Method to use, can be either rtnet50 or rtnet101 (default=rtnet50)',
-                        default='rtnet50', choices=['rtnet50', 'rtnet101'])
-    parser.add_argument('--num-classes', help='Face parsing classes (default=11)',
+    parser.add_argument('--encoder', '-e', help='Method to use, can be either rtnet50 or rtnet101 (default=rtnet50)',
+                        default='rtnet50', choices=['rtnet50', 'rtnet101', 'resnet50'])
+
+    parser.add_argument('--decoder', help='Method to use, can be either rtnet50 or rtnet101 (default=rtnet50)',
+                        default='fcn', choices=['fcn', 'deeplabv3plus'])
+    parser.add_argument('--num-classes', help='Face parsing classes (default=11)', type=int,
                         default=11)
     parser.add_argument('--max-num-faces', help='Max number of faces',
                         default=50)
@@ -39,14 +42,14 @@ def main() -> None:
 
     # Set benchmark mode flag for CUDNN
     torch.backends.cudnn.benchmark = args.benchmark
-    args.method = args.method.lower().strip()
+    # args.method = args.method.lower().strip()
     vid = None
     out_vid = None
     has_window = False
     face_detector = RetinaFacePredictor(threshold=args.threshold, device=args.device,
                                         model=(RetinaFacePredictor.get_model('mobilenet0.25')))
     face_parser = RTNetPredictor(
-        device=args.device, ckpt=args.weights, encoder=args.method, num_classes=args.num_classes)
+        device=args.device, ckpt=args.weights, encoder=args.encoder, decoder=args.decoder, num_classes=args.num_classes)
 
     colormap = label_colormap(args.num_classes)
     print('Face detector created using RetinaFace.')

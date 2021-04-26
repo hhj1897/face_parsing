@@ -290,13 +290,13 @@ class RTNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x, rois, return_features=False):
-        _, _, H, W = x.shape
+    def forward(self, x, rois, *args, **kwargs):
+        _, _, H, _ = x.shape
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
-        _, _, H_stem, W_stem = x.shape
+        _, _, H_stem, _ = x.shape
         s1 = H / H_stem
         c1 = self.layer1(dict(x=x, rois=rois/s1))['x']
         s2 = H / c1.shape[2]
@@ -305,9 +305,7 @@ class RTNet(nn.Module):
         c3 = self.layer3(dict(x=c2, rois=rois/s3))['x']
         s4 = H / c3.shape[2]
         c4 = self.layer4(dict(x=c3, rois=rois/s4))['x']
-        if return_features:
-            return dict(c1=c1, c2=c2, c3=c3, c4=c4)
-        return dict(out=c4, aux=c3)
+        return dict(c1=c1, c2=c2, c3=c3, c4=c4)
 
 
 def rtnet50(pretrained=False, **kwargs):
@@ -318,7 +316,7 @@ def rtnet50(pretrained=False, **kwargs):
     model = RTNet(HybridBlock, [3, 4, 6, 3],
                   deep_stem=False, stem_width=32, avg_down=False,
                   avd=False, **kwargs)
-
+    model.num_channels = 2048
     return model
 
 
@@ -330,6 +328,7 @@ def rtnet101(pretrained=False, **kwargs):
     model = RTNet(HybridBlock, [3, 4, 23, 3],
                   deep_stem=False, stem_width=64, avg_down=False,
                   avd=False, **kwargs)
+    model.num_channels = 2048
     return model
 
 
