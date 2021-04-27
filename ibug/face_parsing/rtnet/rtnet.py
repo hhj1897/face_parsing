@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 from ibug.roi_tanh_warping import (roi_tanh_polar_to_roi_tanh,
@@ -26,6 +27,80 @@ def conv1x1(in_planes, out_planes, stride=1, groups=1):
     """1x1 convolution"""
     return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride,
                      bias=False, groups=groups)
+
+
+class Bottleneck(nn.Module):
+    '''
+    from https://github.com/rwightman/pytorch-image-models/blob/master/timm/models/resnet.py
+    '''
+    expansion = 4
+
+    def __init__(self, inplanes, planes, stride=1, downsample=None, cardinality=1, base_width=64,
+                 reduce_first=1, dilation=1, first_dilation=None, act_layer=nn.ReLU, norm_layer=nn.BatchNorm2d,
+                 aa_layer=None, drop_block=None, drop_path=None):
+        super(Bottleneck, self).__init__()
+
+        width = int(math.floor(planes * (base_width / 64)) * cardinality)
+        first_planes = width // reduce_first
+        outplanes = planes * self.expansion
+        first_dilation = first_dilation or dilation
+        use_aa = aa_layer is not None and (
+            stride == 2 or first_dilation != dilation)
+
+        self.conv1 = nn.Conv2d(inplanes, first_planes,
+                               kernel_size=1, bias=False)
+        self.bn1 = norm_layer(first_planes)
+        self.act1 = act_layer(inplace=True)
+
+        self.conv2 = nn.Conv2d(
+            first_planes, width, kernel_size=3, stride=1 if use_aa else stride,
+            padding=first_dilation, dilation=first_dilation, groups=cardinality, bias=False)
+        self.bn2 = norm_layer(width)
+        self.act2 = act_layer(inplace=True)
+        self.aa = aa_layer(channels=width, stride=stride) if use_aa else None
+
+        self.conv3 = nn.Conv2d(width, outplanes, kernel_size=1, bias=False)
+        self.bn3 = norm_layer(outplanes)
+
+        self.act3 = act_layer(inplace=True)
+        self.downsample = downsample
+        self.stride = stride
+        self.dilation = dilation
+        self.drop_block = drop_block
+        self.drop_path = drop_path
+
+    def forward(self, x):
+        x, rois = x['x'], x['rois']
+
+        residual = x
+
+        x = self.conv1(x)
+        x = self.bn1(x)
+        if self.drop_block is not None:
+            x = self.drop_block(x)
+        x = self.act1(x)
+
+        x = self.conv2(x)
+        x = self.bn2(x)
+        if self.drop_block is not None:
+            x = self.drop_block(x)
+        x = self.act2(x)
+        if self.aa is not None:
+            x = self.aa(x)
+
+        x = self.conv3(x)
+        x = self.bn3(x)
+        if self.drop_block is not None:
+            x = self.drop_block(x)
+
+        if self.drop_path is not None:
+            x = self.drop_path(x)
+
+        if self.downsample is not None:
+            residual = self.downsample(residual)
+        x += residual
+        x = self.act3(x)
+        return dict(x=x, rois=rois)
 
 
 class MixPad2d(nn.Module):
@@ -239,7 +314,7 @@ class RTNet(nn.Module):
                 nn.init.constant_(m.bias, 0)
         if zero_init_residual:
             for m in self.modules():
-                if isinstance(m, HybridBlock):
+                if isinstance(m, (HybridBlock, Bottleneck)):
                     nn.init.constant_(m.bn3.weight, 0)
                 # elif isinstance(m, BasicBlock):
                     # nn.init.constant_(m.bn2.weight, 0)
@@ -282,11 +357,15 @@ class RTNet(nn.Module):
 
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
-            layers.append(block(self.inplanes, planes,
-                                cardinality=self.cardinality,
-                                bottleneck_width=self.bottleneck_width,
-                                avd=self.avd, dilation=dilation,
-                                norm_layer=norm_layer, hybrid=hybrid))
+            if not hybrid:
+                layers.append(Bottleneck(self.inplanes, planes,
+                              cardinality=self.cardinality))
+            else:
+                layers.append(block(self.inplanes, planes,
+                                    cardinality=self.cardinality,
+                                    bottleneck_width=self.bottleneck_width,
+                                    avd=self.avd, dilation=dilation,
+                                    norm_layer=norm_layer, hybrid=hybrid))
 
         return nn.Sequential(*layers)
 
