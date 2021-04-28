@@ -22,6 +22,7 @@ DECODER_MAP = {
 WEIGHT = {
     # 'rtnet50-fcn-11': (Path(__file__).parent / 'rtnet/weights/rtnet50.torch', (0.406, 0.456, 0.485), (0.225, 0.224, 0.229), (512, 512)),
     # 'rtnet101-fcn-11': (Path(__file__).parent / 'rtnet/weights/rtnet101.torch', (0.406, 0.456, 0.485), (0.225, 0.224, 0.229), (512, 512)),
+    'rtnet50-fcn-11': (Path(__file__).parent / 'rtnet/weights/rtnet50-fcn-11.torch', 0.5, 0.5, (513, 513)),
     'rtnet50-fcn-14': (Path(__file__).parent / 'rtnet/weights/rtnet50-fcn-14.torch', 0.5, 0.5, (513, 513)),
     'resnet50-fcn-14': (Path(__file__).parent / 'resnet/weights/resnet50-fcn-14.torch', 0.5, 0.5, (513, 513)),
     'resnet50-deeplabv3plus-14': (Path(__file__).parent / 'resnet/weights/resnet50-deeplabv3plus-14.torch', 0.5, 0.5, (513, 513)),
@@ -62,7 +63,7 @@ class FaceParser(object):
     def __init__(self, device='cuda:0', ckpt=None, encoder='rtnet50', decoder='fcn', num_classes=11):
         self.device = device
         model_name = '-'.join([encoder, decoder, str(num_classes)])
-        assert model_name in WEIGHT
+        assert model_name in WEIGHT, f'{model_name} is not supported'
 
         pretrained_ckpt, mean, std, sz = WEIGHT[model_name]
         self.sz = sz
@@ -127,8 +128,7 @@ class FaceParser(object):
 
     @torch.no_grad()
     def extract_features(self, x: torch.Tensor, rois: torch.Tensor):
-
         features = self.model.encoder(x, rois, return_features=True)
         x = self.model.decoder(features['c4'])
-        features['hm'] = x
+        features['logits'] = x
         return features

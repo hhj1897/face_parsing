@@ -25,7 +25,7 @@ def main() -> None:
     parser.add_argument('--threshold', '-t', help='Detection threshold (default=0.8)',
                         type=float, default=0.8)
     parser.add_argument('--encoder', '-e', help='Method to use, can be either rtnet50 or rtnet101 (default=rtnet50)',
-                        default='rtnet50', choices=['rtnet50', 'rtnet101', 'resnet50'])
+                        default='rtnet50') # choices=['rtnet50', 'rtnet101', 'resnet50'])
 
     parser.add_argument('--decoder', help='Method to use, can be either rtnet50 or rtnet101 (default=rtnet50)',
                         default='fcn', choices=['fcn', 'deeplabv3plus'])
