@@ -9,6 +9,7 @@ from ibug.roi_tanh_warping import roi_tanh_polar_restore, roi_tanh_polar_warp
 import ibug.roi_tanh_warping.reference_impl as ref
 from .rtnet import rtnet50, rtnet101, FCN
 from .resnet import Backbone, DeepLabV3Plus
+from torch.nn.functional import softmax
 
 ENCODER_MAP = {
     'rtnet50': [rtnet50, 2048],  # model_func, in_channels
@@ -113,16 +114,12 @@ class FaceParser(object):
         return mask
 
     def restore_warp(self, h, w, logits: torch.Tensor, bboxes_tensor):
-        # import ipdb; ipdb.set_trace()
-        # logits = logits.sigmoid()
-        # print(logits.argmax(-1).max())
-        # logits[:, 0] = 1 - logits[:, 0]  # background class
+        logits = softmax(logits, 1)
+        logits[:, 0] = 1 - logits[:, 0]  # background class
         logits = roi_tanh_polar_restore(
             logits, bboxes_tensor, w, h, keep_aspect_ratio=True
         )
-        # print(logits.argmax(-1).max())
-        # logits[:, 0] = 1 - logits[:, 0]
-        # print(logits.argmax(-1).max())
+        logits[:, 0] = 1 - logits[:, 0]
         predict = logits.cpu().argmax(1).numpy()
         return predict
 
