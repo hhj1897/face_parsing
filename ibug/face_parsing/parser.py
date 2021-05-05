@@ -33,7 +33,7 @@ WEIGHT = {
 
 class SegmentationModel(nn.Module):
 
-    def __init__(self, encoder='rtnet50', decoder='fcn', num_classes=11):
+    def __init__(self, encoder='rtnet50', decoder='fcn', num_classes=14):
         super().__init__()
 
         if 'rtnet' in encoder:
