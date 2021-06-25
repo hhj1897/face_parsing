@@ -4,13 +4,17 @@ RoI Tanh-polar Transformer Network for Face Parsing in the Wild.
 
 __Note__: If you use this repository in your research, we kindly rquest you to cite the [following paper](https://arxiv.org/pdf/2102.02717):
 ```bibtex
-@misc{lin2021roi,
-      title={RoI Tanh-polar Transformer Network for Face Parsing in the Wild}, 
-      author={Yiming Lin and Jie Shen and Yujiang Wang and Maja Pantic},
-      year={2021},
-      eprint={2102.02717},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV}
+@article{lin2021roi,
+title = {RoI Tanh-polar transformer network for face parsing in the wild},
+journal = {Image and Vision Computing},
+volume = {112},
+pages = {104190},
+year = {2021},
+issn = {0262-8856},
+doi = {https://doi.org/10.1016/j.imavis.2021.104190},
+url = {https://www.sciencedirect.com/science/article/pii/S0262885621000950},
+author = {Yiming Lin and Jie Shen and Yujiang Wang and Maja Pantic},
+keywords = {Face parsing, In-the-wild dataset, Head pose augmentation, Tanh-polar representation},
 }
 ```
 
