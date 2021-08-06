@@ -46,6 +46,10 @@ Command-line arguments:
 --decoder: Decoder (default=fcn)
 -n: Number of facial classes, can be 11 or 14 for now (default=11)
 ```
+## iBugMask Dataset
+The training and testing images, bounding boxes, landmarks, and parsing maps can be found in the following:
+
+* [Google Drive](https://drive.google.com/file/d/1hGSki97qQPGNB812hh2Wf1_lP9NgJkti) 
 
 ## Label Maps
 
