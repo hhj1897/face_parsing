@@ -50,7 +50,6 @@ Command-line arguments:
 The training and testing images, bounding boxes, landmarks, and parsing maps can be found in the following:
 
 * [Google Drive](https://drive.google.com/file/d/1hGSki97qQPGNB812hh2Wf1_lP9NgJkti) 
-* [Dropbox](https://www.dropbox.com/s/mhpl0qn1xq8lblx/ibugmask_release.zip?dl=0) (password: ibugmask)
 
 ## Label Maps
 
