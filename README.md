@@ -19,6 +19,7 @@ keywords = {Face parsing, In-the-wild dataset, Head pose augmentation, Tanh-pola
 ```
 
 ## Dependencies
+* [git-lfs](https://git-lfs.github.com/)
 * [Numpy](https://www.numpy.org/): `$pip3 install numpy`
 * [OpenCV](https://opencv.org/): `$pip3 install opencv-python`
 * [PyTorch](https://pytorch.org/): `$pip3 install torch torchvision`
