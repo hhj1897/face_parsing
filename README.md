@@ -1,6 +1,9 @@
-# ibug.face_parsing
-RoI Tanh-polar Transformer Network for Face Parsing in the Wild.
+# RoI Tanh-polar Transformer Network for Face Parsing in the Wild
 
+**2022-03-04 Update**: We have released the FP-Age model which can perform face parsing and age estimation simultaneously, please visit https://github.com/ibug-group/fpage for details. 
+
+---
+Official repo for our paper *RoI Tanh-polar transformer network for face parsing in the wild*. 
 
 __Note__: If you use this repository in your research, we kindly rquest you to cite the [following paper](https://arxiv.org/pdf/2102.02717):
 ```bibtex
