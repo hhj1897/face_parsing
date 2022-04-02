@@ -1,7 +1,8 @@
 # RoI Tanh-polar Transformer Network for Face Parsing in the Wild
 
-**2022-04-02 Update**: If you have problems downloading the weights, check out issue https://github.com/hhj1897/face_parsing/issues/7#issuecomment-1086684106
+## Recent Updates
 
+**2022-04-02 Update**: If you **could not download the weights with LFS**, check out issue https://github.com/hhj1897/face_parsing/issues/7#issuecomment-1086684106 for alternative downloading links.
 
 **2022-03-04 Update**: We have released the FP-Age model which can perform face parsing and age estimation simultaneously, please visit https://github.com/ibug-group/fpage for details. 
 
