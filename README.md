@@ -2,14 +2,15 @@
 
 ## Recent Updates
 
-**2022-04-02 Update**: If you **could not download the weights with LFS**, check out issue https://github.com/hhj1897/face_parsing/issues/7#issuecomment-1086684106 for alternative downloading links.
+**2022-04-02 Update**: If you **could not download the weights with LFS**, check out issue <https://github.com/hhj1897/face_parsing/issues/7#issuecomment-1086684106> for alternative downloading links.
 
-**2022-03-04 Update**: We have released the FP-Age model which can perform face parsing and age estimation simultaneously, please visit https://github.com/ibug-group/fpage for details. 
+**2022-03-04 Update**: We have released the FP-Age model which can perform face parsing and age estimation simultaneously, please visit <https://github.com/ibug-group/fpage> for details.
 
 ---
-Official repo for our paper *RoI Tanh-polar transformer network for face parsing in the wild*. 
+Official repo for our paper *RoI Tanh-polar transformer network for face parsing in the wild*.
 
-__Note__: If you use this repository in your research, we kindly rquest you to cite the [following paper](https://arxiv.org/pdf/2102.02717):
+**Note**: If you use this repository in your research, we kindly rquest you to cite the [following paper](https://arxiv.org/pdf/2102.02717):
+
 ```bibtex
 @article{lin2021roi,
 title = {RoI Tanh-polar transformer network for face parsing in the wild},
@@ -26,6 +27,7 @@ keywords = {Face parsing, In-the-wild dataset, Head pose augmentation, Tanh-pola
 ```
 
 ## Dependencies
+
 * [git-lfs](https://git-lfs.github.com/)
 * [Numpy](https://www.numpy.org/): `$pip3 install numpy`
 * [OpenCV](https://opencv.org/): `$pip3 install opencv-python`
@@ -34,6 +36,7 @@ keywords = {Face parsing, In-the-wild dataset, Head pose augmentation, Tanh-pola
 * [ibug.face_detection](https://github.com/hhj1897/face_detection) (only needed by the test script): See this repository for details: [https://github.com/hhj1897/face_detection](https://github.com/hhj1897/face_detection).
 
 ## How to Install
+
 ```bash
 git clone https://github.com/hhj1897/face_parsing
 cd face_parsing
@@ -42,10 +45,13 @@ pip install -e .
 ```
 
 ## How to Test
+
 ```bash
-python face_warping_test.py -i 0 -e rtnet50 --decoder fcn -n 11 -d cuda:0
+python face_parsing_test.py -i 0 --decoder fcn -n 14 -d cpu -m -e resnet50
 ```
+
 Command-line arguments:
+
 ```
 -i VIDEO: Index of the webcam to use (start from 0) or
           path of the input video file
@@ -54,15 +60,26 @@ Command-line arguments:
 --decoder: Decoder (default=fcn)
 -n: Number of facial classes, can be 11 or 14 for now (default=11)
 ```
+
+### Mask propogation
+
+Use current frame + previous mask as input
+
+```bash
+python face_parsing_test.py -i 0 --decoder fcn -n 14 -d cpu -m -e mask-prop-resnet50
+```
+
 ## iBugMask Dataset
+
 The training and testing images, bounding boxes, landmarks, and parsing maps can be found in the following:
 
-* [Google Drive](https://drive.google.com/file/d/1hGSki97qQPGNB812hh2Wf1_lP9NgJkti) 
+* [Google Drive](https://drive.google.com/file/d/1hGSki97qQPGNB812hh2Wf1_lP9NgJkti)
 * [ibug link](https://ibug.doc.ic.ac.uk/download/rtnet/ibugmask_release.zip)
 
 ## Label Maps
 
-Label map for 11 classes: 
+Label map for 11 classes:
+
 ```
 0 : background
 1 : skin (including face and scalp)
@@ -77,7 +94,8 @@ Label map for 11 classes:
 10 : hair
 ```
 
-Label map for 14 classes: 
+Label map for 14 classes:
+
 ```
 0 : background
 1 : skin (including face and scalp)
@@ -96,5 +114,6 @@ Label map for 14 classes:
 ```
 
 ## Visualisation
+
 ![](./imgs/vis1.jpg)
 ![](./imgs/vis2.jpg)

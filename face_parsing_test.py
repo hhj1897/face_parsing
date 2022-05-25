@@ -26,7 +26,8 @@ def main() -> None:
                         type=float, default=0.8)
     parser.add_argument('--encoder', '-e', help='Method to use, can be either rtnet50 or rtnet101 (default=rtnet50)',
                         default='rtnet50') # choices=['rtnet50', 'rtnet101', 'resnet50'])
-
+    parser.add_argument('--mask-prop', '-m', help='mask propagation method',
+                        action='store_true', default=False)
     parser.add_argument('--decoder', help='Method to use, can be either rtnet50 or rtnet101 (default=rtnet50)',
                         default='fcn', choices=['fcn', 'deeplabv3plus'])
     parser.add_argument('-n', '--num-classes', help='Face parsing classes (default=11)', type=int, default=11)
@@ -48,7 +49,7 @@ def main() -> None:
     face_detector = RetinaFacePredictor(threshold=args.threshold, device=args.device,
                                         model=(RetinaFacePredictor.get_model('mobilenet0.25')))
     face_parser = RTNetPredictor(
-        device=args.device, ckpt=args.weights, encoder=args.encoder, decoder=args.decoder, num_classes=args.num_classes)
+        device=args.device, ckpt=args.weights, encoder=args.encoder, decoder=args.decoder, num_classes=args.num_classes, input_channel=4 if args.mask_prop else 3)
 
     colormap = label_colormap(args.num_classes)
     print('Face detector created using RetinaFace.')
@@ -75,6 +76,7 @@ def main() -> None:
         frame_number = 0
         window_title = os.path.splitext(os.path.basename(__file__))[0]
         print('Processing started, press \'Q\' to quit.')
+        prev_mask = None
         while True:
             # Get a new frame
             _, frame = vid.read()
@@ -94,7 +96,12 @@ def main() -> None:
                     continue
                 # Parse faces
                 start_time = time.time()
-                masks = face_parser.predict_img(frame, faces, rgb=False)
+                if prev_mask is None and args.mask_prop:
+                    prev_mask = np.zeros((len(faces), frame.shape[0], frame.shape[1]), dtype=np.uint8)
+                # import ipdb; ipdb.set_trace()
+                masks = face_parser.predict_img(frame, faces, rgb=False, prev_mask=prev_mask)
+                if args.mask_prop:
+                    prev_mask = masks
                 elapsed_time = time.time() - start_time
 
                 # Textural output

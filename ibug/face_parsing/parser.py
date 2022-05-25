@@ -27,20 +27,21 @@ WEIGHT = {
     'rtnet50-fcn-14': (Path(__file__).parent / 'rtnet/weights/rtnet50-fcn-14.torch', 0.5, 0.5, (513, 513)),
     'rtnet101-fcn-14': (Path(__file__).parent / 'rtnet/weights/rtnet101-fcn-14.torch', 0.5, 0.5, (513, 513)),
     'resnet50-fcn-14': (Path(__file__).parent / 'resnet/weights/resnet50-fcn-14.torch', 0.5, 0.5, (513, 513)),
+    'mask-prop-resnet50-fcn-14': (Path(__file__).parent / 'resnet/weights/mask-prop-resnet50-fcn-14.torch', 0.5, 0.5, (513, 513)),
     'resnet50-deeplabv3plus-14': (Path(__file__).parent / 'resnet/weights/resnet50-deeplabv3plus-14.torch', 0.5, 0.5, (513, 513)),
 }
 
 
 class SegmentationModel(nn.Module):
 
-    def __init__(self, encoder='rtnet50', decoder='fcn', num_classes=14):
+    def __init__(self, encoder='rtnet50', decoder='fcn', num_classes=14, input_channel=3):
         super().__init__()
-
+        self.num_classes=num_classes
         if 'rtnet' in encoder:
             encoder_func, in_channels = ENCODER_MAP[encoder.lower()]
             self.encoder = encoder_func()
         else:
-            self.encoder = Backbone(encoder)
+            self.encoder = Backbone(encoder, input_channel=input_channel)
             in_channels = self.encoder.num_channels
         self.decoder = DECODER_MAP[decoder.lower()](
             in_channels=in_channels, num_classes=num_classes)
@@ -49,7 +50,6 @@ class SegmentationModel(nn.Module):
     def forward(self, x, rois):
         input_shape = x.shape[-2:]
         features = self.encoder(x, rois)
-
         low = features['c1']
         high = features['c4']
         if self.low_level:
@@ -62,7 +62,7 @@ class SegmentationModel(nn.Module):
 
 
 class FaceParser(object):
-    def __init__(self, device='cuda:0', ckpt=None, encoder='rtnet50', decoder='fcn', num_classes=11):
+    def __init__(self, device='cuda:0', ckpt=None, encoder='rtnet50', decoder='fcn', num_classes=11, input_channel=3):
         self.device = device
         model_name = '-'.join([encoder, decoder, str(num_classes)])
         assert model_name in WEIGHT, f'{model_name} is not supported'
@@ -70,7 +70,7 @@ class FaceParser(object):
         pretrained_ckpt, mean, std, sz = WEIGHT[model_name]
         self.sz = sz
 
-        self.model = SegmentationModel(encoder, decoder, num_classes)
+        self.model = SegmentationModel(encoder, decoder, num_classes, input_channel=input_channel)
 
         self.transform = T.Compose([
             T.ToTensor(),
@@ -85,7 +85,7 @@ class FaceParser(object):
         self.model.to(device)
 
     @torch.no_grad()
-    def predict_img(self, img, bboxes, rgb=False):
+    def predict_img(self, img, bboxes, rgb=False, prev_mask=None):
 
         if isinstance(img, str):
             img = cv2.imread(img)
@@ -99,17 +99,22 @@ class FaceParser(object):
         num_faces = len(bboxes)
 
 
+        
+        # img = np.concatenate([img, prev_mask], axis=2)
+
         imgs = [ref.roi_tanh_polar_warp(img, b, *self.sz, keep_aspect_ratio=True) for b in bboxes]
         imgs = [self.transform(img) for img in imgs]
         bboxes_tensor = torch.tensor(
             bboxes).view(num_faces, -1).to(self.device)
 
-        # img = img.repeat(num_faces, 1, 1, 1)
-        # img = roi_tanh_polar_warp(
-            # img, bboxes_tensor, target_height=self.sz[0], target_width=self.sz[1], keep_aspect_ratio=True)
-        # img = self.transform(img).unsqueeze(0).to(self.device)
-
         img = torch.stack(imgs).to(self.device)
+        if prev_mask is not None:
+            # prev_mask = cv2.resize(prev_mask, (w, h), interpolation=cv2.INTER_NEAREST)[..., np.newaxis]
+            # import ipdb; ipdb.set_trace()
+            prev_mask = (prev_mask - 0.5 * self.model.num_classes) / (0.5 * self.model.num_classes)
+            prev_mask = np.stack([ref.roi_tanh_polar_warp(m, b, *self.sz, keep_aspect_ratio=True) for b, m in zip(bboxes, prev_mask)])
+            prev_mask = torch.from_numpy(prev_mask).to(self.device).view(-1, 1, *self.sz)
+            img = torch.concat([img, prev_mask], dim=1).float()
         logits = self.model(img, bboxes_tensor)
         mask = self.restore_warp(h, w, logits, bboxes_tensor)
         return mask
