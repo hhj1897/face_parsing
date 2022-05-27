@@ -1,4 +1,6 @@
+from functools import partial
 from pathlib import Path
+from socket import IP_DROP_MEMBERSHIP
 import cv2
 import numpy as np
 import torch
@@ -13,6 +15,7 @@ from torch.nn.functional import softmax
 
 ENCODER_MAP = {
     'rtnet50': [rtnet50, 2048],  # model_func, in_channels
+    'mask-prop-rtnet50': [rtnet50, 2048],  # model_func, in_channels
     'rtnet101': [rtnet101, 2048],
 }
 DECODER_MAP = {
@@ -28,6 +31,7 @@ WEIGHT = {
     'rtnet101-fcn-14': (Path(__file__).parent / 'rtnet/weights/rtnet101-fcn-14.torch', 0.5, 0.5, (513, 513)),
     'resnet50-fcn-14': (Path(__file__).parent / 'resnet/weights/resnet50-fcn-14.torch', 0.5, 0.5, (513, 513)),
     'mask-prop-resnet50-fcn-14': (Path(__file__).parent / 'resnet/weights/mask-prop-resnet50-fcn-14.torch', 0.5, 0.5, (513, 513)),
+    'mask-prop-rtnet50-fcn-14': (Path(__file__).parent / 'rtnet/weights/mask-prop-rtnet50-fcn-14.torch', 0.5, 0.5, (513, 513)),
     'resnet50-deeplabv3plus-14': (Path(__file__).parent / 'resnet/weights/resnet50-deeplabv3plus-14.torch', 0.5, 0.5, (513, 513)),
 }
 
@@ -39,7 +43,7 @@ class SegmentationModel(nn.Module):
         self.num_classes=num_classes
         if 'rtnet' in encoder:
             encoder_func, in_channels = ENCODER_MAP[encoder.lower()]
-            self.encoder = encoder_func()
+            self.encoder = encoder_func(input_channel=input_channel)
         else:
             self.encoder = Backbone(encoder, input_channel=input_channel)
             in_channels = self.encoder.num_channels

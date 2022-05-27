@@ -47,7 +47,7 @@ pip install -e .
 ## How to Test
 
 ```bash
-python face_parsing_test.py -i 0 --decoder fcn -n 14 -d cpu -m -e resnet50
+python face_parsing_test.py -i 0 --decoder fcn -n 14 -d cuda -e rtnet50
 ```
 
 Command-line arguments:
@@ -66,7 +66,7 @@ Command-line arguments:
 Use current frame + previous mask as input
 
 ```bash
-python face_parsing_test.py -i 0 --decoder fcn -n 14 -d cpu -m -e mask-prop-resnet50
+python face_parsing_test.py -i 0 --decoder fcn -n 14 -d cuda -m -e mask-prop-resnet50
 ```
 
 ## iBugMask Dataset

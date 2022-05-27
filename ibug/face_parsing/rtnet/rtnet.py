@@ -245,7 +245,7 @@ class RTNet(nn.Module):
         - Yu, Fisher, and Vladlen Koltun. "Multi-scale context aggregation by dilated convolutions."
     """
 
-    def __init__(self, block, layers, groups=1, bottleneck_width=32, dilated=True, dilation=1,
+    def __init__(self, block, layers, groups=1, bottleneck_width=32, dilated=True, dilation=1, input_channel=3,
                  deep_stem=False, stem_width=64, avg_down=False, hybrid_stages=[True, True, True],
                  avd=False, norm_layer=nn.BatchNorm2d, zero_init_residual=True, **kwargs):
         super(RTNet, self).__init__()
@@ -268,7 +268,7 @@ class RTNet(nn.Module):
         conv_layer = nn.Conv2d
         if deep_stem:
             self.conv1 = nn.Sequential(
-                conv_layer(3, stem_width, kernel_size=3,
+                conv_layer(input_channel, stem_width, kernel_size=3,
                            stride=2, padding=1, bias=False),
                 norm_layer(stem_width),
                 nn.ReLU(inplace=True),
@@ -280,7 +280,7 @@ class RTNet(nn.Module):
                            stride=1, padding=1, bias=False),
             )
         else:
-            self.conv1 = conv_layer(3, 64, kernel_size=7, stride=2, padding=3,
+            self.conv1 = conv_layer(input_channel, 64, kernel_size=7, stride=2, padding=3,
                                     bias=False)
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
