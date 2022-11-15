@@ -1,0 +1,6 @@
+@software{lin_face_parsing_github,
+  author = {Lin, Yiming and Shen, Jie},
+  title = {RoI Tanh-polar Transformer Network for Face Parsing in the Wild},
+  url = {https://github.com/hhj1897/face_parsing/},
+  year = {2021}
+}
